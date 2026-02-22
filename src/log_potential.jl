@@ -14,8 +14,7 @@ struct VolumeLogPotential{F}
     x0::Vector{Float64}
 end
 
-function VolumeLogPotential(prob::VolumeProblem)
-    sigma = prob.sigma === nothing ? 1.0 : prob.sigma
+function VolumeLogPotential(prob::VolumeProblem, sigma::Float64)
     VolumeLogPotential(prob.membership, prob.dim, sigma, prob.x0)
 end
 

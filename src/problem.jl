@@ -1,5 +1,5 @@
 """
-    VolumeProblem(membership, dim; sigma=nothing, x0=zeros(dim))
+    VolumeProblem(membership, dim; x0=zeros(dim))
 
 Define a high-dimensional volume estimation problem.
 
@@ -9,20 +9,16 @@ Define a high-dimensional volume estimation problem.
 - `dim::Int`: Dimensionality of the space.
 
 # Keyword Arguments
-- `sigma`: Standard deviation of the Gaussian reference distribution N(x0, σ²I).
-  If `nothing` (default), automatically estimated via `find_kmax` so that σ = 1/√kmax.
 - `x0::AbstractVector`: A point known to be inside the region, used for MCMC initialization.
   Default: `zeros(dim)`.
 """
 struct VolumeProblem{F}
     membership::F
     dim::Int
-    sigma::Union{Nothing, Float64}
     x0::Vector{Float64}
 
     function VolumeProblem(
         membership::F, dim::Int;
-        sigma::Union{Nothing, Float64} = nothing,
         x0::Union{Nothing, AbstractVector{<:Real}} = nothing
     ) where {F}
         x_init = x0 === nothing ? zeros(dim) : Vector{Float64}(x0)
@@ -32,6 +28,6 @@ struct VolumeProblem{F}
                 "Got membership(x0) = false for x0 = $x_init"
             ))
         end
-        new{F}(membership, dim, sigma, x_init)
+        new{F}(membership, dim, x_init)
     end
 end

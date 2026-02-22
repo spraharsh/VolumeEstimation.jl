@@ -39,13 +39,10 @@ function CommonSolve.solve(prob::VolumeProblem;
         n_chains::Int = 10,
         kwargs...)
 
-    # Estimate sigma and acceptance fraction via kmax if not provided
-    (sigma, p_acc) = if prob.sigma === nothing
-        (; kmax, acceptance) = find_kmax(prob.membership, prob.x0)
-        (1 / sqrt(kmax), acceptance)
-    else
-        (prob.sigma, one(prob.sigma))
-    end
+    # Estimate sigma and acceptance fraction via kmax
+    (; kmax, acceptance) = find_kmax(prob.membership, prob.x0)
+    sigma = 1 / sqrt(kmax)
+    p_acc = acceptance
 
     target = VolumeLogPotential(prob.membership, prob.dim, sigma, prob.x0)
 
