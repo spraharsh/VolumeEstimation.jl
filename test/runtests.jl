@@ -54,4 +54,31 @@ using CommonSolve: solve
         bad_membership(x) = false
         @test_throws ArgumentError VolumeProblem(bad_membership, 2)
     end
+
+    @testset "MBAR estimator" begin
+        @testset "MBAR Unit Hypercube d=$d" for d in [2, 3]
+            membership(x) = all(abs.(x) .<= 0.5)
+            prob = VolumeProblem(membership, d)
+            sol = solve(prob; n_rounds=15, n_chains=10, estimator=:mbar)
+
+            @test sol.volume > 0
+            @test isapprox(sol.log_volume, 0.0, atol=0.1)
+            @info "MBAR d=$d: estimated volume=$(sol.volume), log_volume=$(sol.log_volume)"
+        end
+
+        @testset "MBAR with thinned traces" begin
+            membership(x) = all(abs.(x) .<= 0.5)
+            prob = VolumeProblem(membership, 3)
+            sol = solve(prob; n_rounds=15, n_chains=10, estimator=:mbar, trace_thin=2)
+
+            @test sol.volume > 0
+            @test isapprox(sol.log_volume, 0.0, atol=0.1)
+        end
+
+        @testset "MBAR invalid estimator" begin
+            membership(x) = all(abs.(x) .<= 0.5)
+            prob = VolumeProblem(membership, 2)
+            @test_throws ArgumentError solve(prob; estimator=:invalid)
+        end
+    end
 end
