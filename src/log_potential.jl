@@ -34,7 +34,7 @@ function Pigeons.default_reference(lp::VolumeLogPotential)
 end
 
 function Pigeons.default_explorer(::VolumeLogPotential)
-    Pigeons.AutoMALA()
+    Pigeons.SliceSampler()
 end
 
 """
