@@ -12,10 +12,12 @@ Thinning is handled at the recorder level via `thin_traces()`.
   and subsample correlated data per chain. Default: `true`.
 
 # Returns
-A named tuple `(u_kn, N_k)` where:
+A named tuple `(u_kn, N_k, r_by_chain)` where:
 - `u_kn::Matrix{Float64}`: K × N_total reduced potential matrix.
   `u_kn[k, n] = -log_potential_k(x_n)`.
 - `N_k::Vector{Int}`: sample counts per chain.
+- `r_by_chain::Vector{Vector{Float64}}`: radial distances `|x - x0|` for each
+  sample, grouped by chain. `r_by_chain[k]` has length `N_k[k]`.
 """
 function extract_u_kn(pt; decorrelate::Bool = true)
     traces = pt.reduced_recorders.traces
@@ -49,8 +51,12 @@ function extract_u_kn(pt; decorrelate::Bool = true)
                 chain_samples[k] = xs
                 continue
             end
-            # Use the chain's own log potential as the decorrelation observable
-            A_t = Float64[log_potentials[k](x) for x in xs]
+            # Use the reference log potential as the decorrelation observable.
+            # The chain's own log potential is degenerate (constant 0) for
+            # near-target chains, making autocorrelation undetectable.
+            # The reference potential -(precision/2)|x-x0|² varies across
+            # all of S regardless of chain.
+            A_t = Float64[log_potentials[1](x) for x in xs]
             t0, g, _ = timeseries.detect_equilibration(A_t)
             t0 = Int(t0) + 1  # Python 0-indexed → Julia 1-indexed
             indices = timeseries.subsample_correlated_data(A_t[t0:end], g)
@@ -64,13 +70,18 @@ function extract_u_kn(pt; decorrelate::Bool = true)
         end
     end
 
-    # Build N_k and flatten samples (chains ordered 1..K)
+    # Extract center point for radial distance computation
+    x0 = pt.shared.tempering.path.ref.x0
+
+    # Build N_k, flatten samples, and compute radial distances per chain
     N_k = zeros(Int, K)
     all_samples = Vector{Float64}[]
+    r_by_chain = Vector{Vector{Float64}}(undef, K)
     for k in 1:K
         xs = chain_samples[k]
         N_k[k] = length(xs)
         append!(all_samples, xs)
+        r_by_chain[k] = [norm(x - x0) for x in xs]
     end
     N_total = sum(N_k)
 
@@ -84,7 +95,7 @@ function extract_u_kn(pt; decorrelate::Bool = true)
         end
     end
 
-    return (; u_kn, N_k)
+    return (; u_kn, N_k, r_by_chain)
 end
 
 
