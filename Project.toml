@@ -1,4 +1,4 @@
-name = "Volumes"
+name = "VolumeEstimation"
 uuid = "5dc268c4-7dbc-45e8-9d5a-a4858d7b40d1"
 version = "0.1.0"
 authors = ["Praharsh Suryadevara"]
@@ -15,7 +15,7 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [extensions]
-VolumesPlotsExt = ["Plots", "Statistics"]
+VolumeEstimationPlotsExt = ["Plots", "Statistics"]
 
 [compat]
 CommonSolve = "0.2"

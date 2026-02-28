@@ -1,4 +1,4 @@
-module Volumes
+module VolumeEstimation
 
 using Pigeons
 using CommonSolve
@@ -18,4 +18,4 @@ export VolumeProblem, VolumeSolution
 export extract_u_kn, mbar_log_ratio, thin_traces
 export compute_dos, shape_factor, produce_analysis
 
-end # module Volumes
+end # module VolumeEstimation

@@ -1,6 +1,6 @@
-module VolumesPlotsExt
+module VolumeEstimationPlotsExt
 
-using Volumes
+using VolumeEstimation
 import Plots
 import Statistics
 
@@ -29,12 +29,12 @@ Produces the same plots as the Python `mbar_compute_volume`:
 # Returns
 The `compute_dos` named tuple (for further programmatic use).
 """
-function Volumes.produce_analysis(pt, outdir::AbstractString;
+function VolumeEstimation.produce_analysis(pt, outdir::AbstractString;
                                   decorrelate::Bool = true, nbins::Int = 200)
     mkpath(outdir)
 
-    dos = Volumes.compute_dos(pt; decorrelate, nbins)
-    sf = Volumes.shape_factor(dos)
+    dos = VolumeEstimation.compute_dos(pt; decorrelate, nbins)
+    sf = VolumeEstimation.shape_factor(dos)
 
     K = length(dos.betas)
     finite = isfinite.(dos.log_dos) .& (dos.log_dos .!= 0.0)
@@ -100,4 +100,4 @@ function Volumes.produce_analysis(pt, outdir::AbstractString;
     return dos
 end
 
-end # module VolumesPlotsExt
+end # module VolumeEstimationPlotsExt

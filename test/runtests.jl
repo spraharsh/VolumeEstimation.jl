@@ -1,9 +1,9 @@
 using Test
-using Volumes
+using VolumeEstimation
 using CommonSolve: solve
 using LinearAlgebra: norm
 
-@testset "Volumes.jl" begin
+@testset "VolumeEstimation.jl" begin
     @testset "Unit Hypercube (auto sigma) d=$d" for d in [2, 3, 5]
         membership(x) = all(abs.(x) .<= 0.5)
         prob = VolumeProblem(membership, d)  # sigma estimated via kmax
@@ -91,7 +91,7 @@ using LinearAlgebra: norm
                        0.0 0.8 1.2]
             offsets = [0.0, 0.1]
 
-            ldos = Volumes.dos_from_offsets(visits, log_dos, offsets)
+            ldos = VolumeEstimation.dos_from_offsets(visits, log_dos, offsets)
 
             @test length(ldos) == 3
             # Bin 1: only chain 1 → (0.5 + 0.0) * 1.0 / 1.0 = 0.5

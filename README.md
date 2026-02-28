@@ -1,13 +1,13 @@
-# Volumes.jl
+# VolumeEstimation.jl
 
 Estimate the volume of arbitrary high-dimensional regions in Julia.
 
-Given a boolean membership function that defines a region, Volumes.jl estimates its volume using parallel tempering and stepping-stone sampling via [Pigeons.jl](https://github.com/Julia-Tempering/Pigeons.jl).
+Given a boolean membership function that defines a region, VolumeEstimation.jl estimates its volume using parallel tempering and stepping-stone sampling via [Pigeons.jl](https://github.com/Julia-Tempering/Pigeons.jl).
 
 ## Quick Start
 
 ```julia
-using Volumes, CommonSolve
+using VolumeEstimation, CommonSolve
 
 # Estimate the volume of a 5D unit hypercube (true volume = 1)
 membership(x) = all(abs.(x) .<= 0.5)
@@ -29,7 +29,7 @@ sol.volume  # ≈ 0.1667
 
 ## How It Works
 
-The volume of a region S is the normalizing constant of the uniform distribution on S. Volumes.jl computes this by constructing a tempered path between:
+The volume of a region S is the normalizing constant of the uniform distribution on S. VolumeEstimation.jl computes this by constructing a tempered path between:
 
 - **Target**: uniform distribution on S (log-density 0 inside, -Inf outside)
 - **Reference**: Gaussian N(x0, sigma^2 I) truncated to S, whose partition function is known analytically. The scale sigma is chosen automatically (see below).
@@ -44,7 +44,7 @@ where `Z_ref = (2*pi*sigma^2)^(dim/2) * p_acc` and `p_acc` is the fraction of th
 
 ### Automatic Scale Selection
 
-Volumes.jl automatically finds the right Gaussian scale by searching for `kmax` -- the maximum spring constant k such that ~95% of samples from N(x0, (1/k)I) land inside the region. The reference standard deviation is then `sigma = 1/sqrt(kmax)`.
+VolumeEstimation.jl automatically finds the right Gaussian scale by searching for `kmax` -- the maximum spring constant k such that ~95% of samples from N(x0, (1/k)I) land inside the region. The reference standard deviation is then `sigma = 1/sqrt(kmax)`.
 
 ## API
 
