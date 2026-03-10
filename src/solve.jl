@@ -31,16 +31,24 @@ via Pigeons.jl.
   `pymbar.timeseries` before running MBAR. Default: `false`.
 - `kmax_options::NamedTuple`: Keyword arguments forwarded to `find_kmax` (e.g.
   `kmax_options=(; target=0.9, n_samples=2000)`). Default: `(;)`.
+- `reference`: A Pigeons-compatible reference log potential. If provided, skip
+  `find_kmax` and use this as the reference distribution instead of the default
+  isotropic Gaussian. Must be used together with `log_reference_volume`.
+- `log_reference_volume::Union{Nothing,Float64}`: The known log partition function
+  (log Z) of the reference distribution restricted to the membership region. Required
+  when `reference` is provided; ignored otherwise.
 - `kwargs...`: Additional keyword arguments passed to `Pigeons.pigeons()`.
 
 # Mathematical Details
 The volume is recovered from the normalizing constant ratio:
 
-    log(Volume) = log(Z_target / Z_ref) + (dim/2) * log(2π * σ²) + log(p_acc)
+    log(Volume) = log(Z_target / Z_ref) + log(Z_ref)
 
-where the ratio is estimated by stepping stone or MBAR, and
-`Z_ref = (2πσ²)^(dim/2) * p_acc` is the partition function of the Gaussian
-truncated to the membership region.
+With the default Gaussian reference:
+
+    log(Z_ref) = (dim/2) * log(2π * σ²) + log(p_acc)
+
+With a custom reference, `log(Z_ref) = log_reference_volume`.
 """
 function CommonSolve.solve(prob::VolumeProblem;
         n_rounds::Int = 10,
@@ -48,6 +56,8 @@ function CommonSolve.solve(prob::VolumeProblem;
         estimator::Symbol = :stepping_stone,
         decorrelate::Bool = false,
         kmax_options::NamedTuple = (;),
+        reference = nothing,
+        log_reference_volume::Union{Nothing, Float64} = nothing,
         kwargs...)
 
     estimator in (:stepping_stone, :mbar) ||
@@ -56,10 +66,26 @@ function CommonSolve.solve(prob::VolumeProblem;
     decorrelate && estimator != :mbar &&
         @warn "decorrelate=true has no effect with estimator=:$estimator"
 
-    # Estimate sigma and acceptance fraction via kmax
-    (; kmax, acceptance) = find_kmax(prob.membership, prob.x0; kmax_options...)
-    sigma = 1 / sqrt(kmax)
-    p_acc = acceptance
+    # Validate custom reference arguments
+    if reference !== nothing && log_reference_volume === nothing
+        throw(ArgumentError(
+            "When providing a custom `reference`, you must also provide " *
+            "`log_reference_volume` (the log partition function of the reference " *
+            "distribution restricted to the membership region)."
+        ))
+    end
+
+    if reference !== nothing
+        # Custom reference path: skip find_kmax
+        sigma = 1.0  # dummy value; default_reference won't be called
+        log_ref = log_reference_volume
+    else
+        # Default path: estimate sigma and acceptance fraction via kmax
+        (; kmax, acceptance) = find_kmax(prob.membership, prob.x0; kmax_options...)
+        sigma = 1 / sqrt(kmax)
+        p_acc = acceptance
+        log_ref = (prob.dim / 2) * log(2 * π * sigma^2) + log(p_acc)
+    end
 
     target = VolumeLogPotential(prob.membership, prob.dim, sigma, prob.x0)
 
@@ -76,14 +102,17 @@ function CommonSolve.solve(prob::VolumeProblem;
         pigeons_kw[:extended_traces] = true
     end
 
+    # Pass custom reference to pigeons if provided
+    if reference !== nothing
+        pigeons_kw[:reference] = reference
+    end
+
     pt = Pigeons.pigeons(;
         target = target,
         n_rounds = n_rounds,
         n_chains = n_chains,
         pigeons_kw...
     )
-
-    log_ref = (prob.dim / 2) * log(2 * π * sigma^2) + log(p_acc)
 
     ss_log_vol = Pigeons.stepping_stone(pt) + log_ref
 
