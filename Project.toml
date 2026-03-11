@@ -1,6 +1,6 @@
 name = "VolumeEstimation"
 uuid = "5dc268c4-7dbc-45e8-9d5a-a4858d7b40d1"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Praharsh Suryadevara"]
 
 [deps]
